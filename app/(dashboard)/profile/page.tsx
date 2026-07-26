@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
+import { formatScore, scoreHexColor } from "@/lib/score";
 
 interface Interview {
   _id: string;
@@ -18,13 +19,14 @@ export default function ProfilePage() {
   const { user, logout } = useAuth();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("overview");
 
   useEffect(() => {
     api
       .get<Interview[]>("/interview/history")
       .then(setInterviews)
-      .catch(() => {})
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load your interviews."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -37,11 +39,11 @@ export default function ProfilePage() {
   const total = interviews.length;
   const avgScore =
     completed.length
-      ? ((completed.reduce((s, i) => s + (i.score ?? 0), 0) / completed.length) / 10).toFixed(1)
+      ? formatScore(completed.reduce((s, i) => s + (i.score ?? 0), 0) / completed.length)
       : "—";
   const bestScore =
     completed.length
-      ? (Math.max(...completed.map((i) => i.score)) / 10).toFixed(1)
+      ? formatScore(Math.max(...completed.map((i) => i.score)))
       : "—";
   const topics = new Set(interviews.map((i) => i.topic)).size;
 
@@ -63,6 +65,12 @@ export default function ProfilePage() {
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold text-[#1a2f5e] mb-6">Profile</h1>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600 mb-5">
+          {error}
+        </div>
+      )}
 
       {/* User card */}
       <div className="bg-white rounded-xl shadow-sm p-6 flex items-center gap-6 mb-5">
@@ -380,9 +388,8 @@ function TopicBarChart({
         {data.map((d, i) => {
           const y = i * (BAR_H + GAP);
           const barW = (d.avg / 100) * BAR_MAX;
-          const displayScore = (d.avg / 10).toFixed(1);
-          const color =
-            d.avg >= 80 ? "#22c55e" : d.avg >= 60 ? "#f59e0b" : "#ef4444";
+          const displayScore = formatScore(d.avg);
+          const color = scoreHexColor(d.avg);
           return (
             <g key={d.topic}>
               <text

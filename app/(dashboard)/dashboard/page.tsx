@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { formatScore } from "@/lib/score";
 
 interface Interview {
   _id: string;
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleContinue = (interview: Interview) => {
@@ -33,7 +35,7 @@ export default function DashboardPage() {
   useEffect(() => {
     api.get<Interview[]>("/interview/history")
       .then(setInterviews)
-      .catch(() => {})
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load your interviews."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -50,6 +52,12 @@ export default function DashboardPage() {
       <h1 className="text-xl font-bold text-[#1a2f5e]">
         Welcome back, {user?.name?.split(" ")[0]} 👋
       </h1>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">
+          {error}
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="flex gap-4">
@@ -118,7 +126,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-6">
                   <span className="text-sm text-gray-500">
-                    Score: <span className="font-semibold text-gray-800">{(item.score / 10).toFixed(1)}/10</span>
+                    Score: <span className="font-semibold text-gray-800">{formatScore(item.score)}/10</span>
                   </span>
                   <span className="text-sm text-gray-400">
                     {new Date(item.createdAt).toLocaleDateString()}

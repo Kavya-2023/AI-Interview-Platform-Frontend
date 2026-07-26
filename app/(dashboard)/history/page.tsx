@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import DeleteModal from "@/components/DeleteModal";
+import { formatScore, scoreColorClasses } from "@/lib/score";
 
 interface Interview {
   _id: string;
@@ -128,14 +129,14 @@ export default function HistoryPage() {
                     </button>
                   ) : (
                     <>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        item.score >= 80 ? "bg-green-100 text-green-700" :
-                        item.score >= 60 ? "bg-amber-100 text-amber-700" :
-                        "bg-red-100 text-red-600"
-                      }`}>
-                        {(item.score / 10).toFixed(1)}/10
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${scoreColorClasses(item.score)}`}>
+                        {formatScore(item.score)}/10
                       </span>
-                      <Link href={`/mock-interviews/results?id=${item._id}`} className="text-gray-300 hover:text-gray-500">
+                      <Link
+                        href={`/mock-interviews/results?id=${item._id}`}
+                        aria-label={`View results for ${item.role} · ${item.topic}`}
+                        className="text-gray-300 hover:text-gray-500"
+                      >
                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
@@ -149,6 +150,7 @@ export default function HistoryPage() {
                     onClick={() => setConfirmId(item._id)}
                     className="text-gray-300 hover:text-red-400 transition"
                     title="Delete"
+                    aria-label={`Delete interview: ${item.role} · ${item.topic}`}
                   >
                     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
